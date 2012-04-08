@@ -10,6 +10,7 @@ sub INT_handler
 {
   print "Goodbye\n";
   system("dhclient", "-x");
+  system("killall", "dhclient");
   system("start", "network-manager");
   exit(0);
 };
@@ -36,17 +37,19 @@ while(1)
     {
       last;
     }
-    if ($2 < 30)
-    {
-      last;
-    }
+#    if ($2 < 30)
+#    {
+#      last;
+#    }
     my $sid = $1;
+    my $lq = $2;
     if ($needaddr)
     {
       system("ping -q -c1 -W1 8.8.8.8 >/dev/null 2>/dev/null");
       if ( ($?>>8)!=0 )
       {
         system("dhclient", "-x");
+        system("killall", "dhclient");
         eval {
           local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
           alarm 5;
@@ -57,11 +60,10 @@ while(1)
           die unless $@ eq "alarm\n";   # propagate unexpected errors
           # timed out
         }
-        system("dhclient", "-v", "wlan0");
       }
       $needaddr = 0;
     }
-    print "Associated to $sid. Monitoring...\n";
+    print "Associated to $sid, signal strength $lq. Monitoring...\n";
     sleep(1);
   }
   print "$iwc\n";
